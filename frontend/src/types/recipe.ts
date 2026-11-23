@@ -18,6 +18,8 @@ export interface Recipe {
   servings: number;
   vegetarian: boolean;
   publishedAt: string;
+  /** Id del admin que la creo: solo el puede editarla o borrarla. */
+  createdBy?: string;
   createdAt: string;
   updatedAt: string;
 }

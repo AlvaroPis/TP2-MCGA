@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Link, useNavigate, useParams } from "react-router";
 import { FormField } from "../../components/FormField";
 import { getErrorMessage } from "../../lib/api";
+import { useSession } from "../../lib/auth-client";
 import { recipeFormSchema, type RecipeFormValues } from "../../schemas/recipe.schema";
 import { recipesService } from "../../services/recipes";
 import { CATEGORY_LABELS, RECIPE_CATEGORIES } from "../../types/recipe";
@@ -17,6 +18,9 @@ export const RecipeFormPage = () => {
   const navigate = useNavigate();
   const [serverError, setServerError] = useState<string | null>(null);
   const [loadingRecipe, setLoadingRecipe] = useState(isEdit);
+  const [notOwner, setNotOwner] = useState(false);
+  const { data: session } = useSession();
+  const userId = session?.user.id;
 
   const {
     register,
@@ -37,10 +41,15 @@ export const RecipeFormPage = () => {
   });
 
   useEffect(() => {
-    if (!id) return;
+    if (!id || !userId) return;
     recipesService
       .get(id)
-      .then((recipe) =>
+      .then((recipe) => {
+        // El backend igual responde 403, pero asi no se muestra un formulario que no se puede guardar.
+        if (recipe.createdBy !== userId) {
+          setNotOwner(true);
+          return;
+        }
         reset({
           title: recipe.title,
           description: recipe.description,
@@ -49,11 +58,11 @@ export const RecipeFormPage = () => {
           servings: recipe.servings,
           vegetarian: recipe.vegetarian,
           publishedAt: recipe.publishedAt.slice(0, 10),
-        }),
-      )
+        });
+      })
       .catch((err) => setServerError(getErrorMessage(err)))
       .finally(() => setLoadingRecipe(false));
-  }, [id, reset]);
+  }, [id, userId, reset]);
 
   const onSubmit = async (values: RecipeFormValues) => {
     setServerError(null);
@@ -66,6 +75,18 @@ export const RecipeFormPage = () => {
   };
 
   if (loadingRecipe) return <p className="text-slate-500">Cargando receta...</p>;
+
+  if (notOwner) {
+    return (
+      <section className="mx-auto max-w-md rounded-xl border border-red-200 bg-red-50 p-8 text-center">
+        <h2 className="text-xl font-semibold text-red-800">Sin permisos</h2>
+        <p className="mt-2 text-sm text-red-700">Solo podés editar las recetas que creaste vos.</p>
+        <Link to="/admin" className="btn-secondary mt-6">
+          Volver a tus recetas
+        </Link>
+      </section>
+    );
+  }
 
   return (
     <section className="mx-auto max-w-2xl rounded-xl border border-slate-200 bg-white p-6 shadow-sm">

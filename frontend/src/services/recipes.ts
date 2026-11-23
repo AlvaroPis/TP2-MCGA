@@ -6,14 +6,23 @@ function toPayload(values: RecipeFormValues) {
   return { ...values, publishedAt: `${values.publishedAt}T00:00:00.000Z` };
 }
 
+function toQuery(filters: RecipeFilters): string {
+  const params = new URLSearchParams();
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value !== undefined && value !== "") params.set(key, String(value));
+  });
+  const query = params.toString();
+  return query ? `?${query}` : "";
+}
+
 export const recipesService = {
   list(filters: RecipeFilters = {}) {
-    const params = new URLSearchParams();
-    Object.entries(filters).forEach(([key, value]) => {
-      if (value !== undefined && value !== "") params.set(key, String(value));
-    });
-    const query = params.toString();
-    return apiFetch<Paginated<Recipe>>(`/recipes${query ? `?${query}` : ""}`);
+    return apiFetch<Paginated<Recipe>>(`/recipes${toQuery(filters)}`);
+  },
+
+  // Solo las recetas creadas por el admin logueado (panel de administracion).
+  listMine(filters: RecipeFilters = {}) {
+    return apiFetch<Paginated<Recipe>>(`/recipes/mine${toQuery(filters)}`);
   },
 
   get(id: string) {

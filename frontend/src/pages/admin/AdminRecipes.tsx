@@ -1,4 +1,4 @@
-// Panel admin: tabla con todas las recetas y acciones de alta, edicion y baja (ABM).
+// Panel admin: tabla con las recetas PROPIAS del admin logueado y acciones de alta, edicion y baja (ABM).
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router";
 import { getErrorMessage } from "../../lib/api";
@@ -14,7 +14,7 @@ export const AdminRecipes = () => {
 
   const load = useCallback(() => {
     recipesService
-      .list({ page, limit: 20 })
+      .listMine({ page, limit: 20 })
       .then((data) => {
         setResult(data);
         setError(null);
@@ -42,7 +42,9 @@ export const AdminRecipes = () => {
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold">Panel de administración</h1>
-          <p className="text-sm text-slate-600">Alta, edición y baja de recetas.</p>
+          <p className="text-sm text-slate-600">
+            Tus recetas: solo podés editar y eliminar las que creaste vos.
+          </p>
         </div>
         <Link to="/admin/recetas/nueva" className="btn-primary">
           + Nueva receta
@@ -99,7 +101,7 @@ export const AdminRecipes = () => {
               {result.data.length === 0 && (
                 <tr>
                   <td colSpan={7} className="px-4 py-8 text-center text-slate-500">
-                    Todavía no hay recetas cargadas.
+                    Todavía no creaste ninguna receta.
                   </td>
                 </tr>
               )}

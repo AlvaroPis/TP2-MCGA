@@ -66,7 +66,8 @@ export const RecipeDetail = () => {
 
       <p className="whitespace-pre-line leading-relaxed text-slate-700">{recipe.description}</p>
 
-      {getRole(session?.user) === "admin" && (
+      {/* Solo el admin que la creo puede editarla */}
+      {getRole(session?.user) === "admin" && recipe.createdBy === session?.user.id && (
         <Link to={`/admin/recetas/${recipe._id}/editar`} className="btn-secondary mt-8">
           Editar receta
         </Link>
