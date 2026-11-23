@@ -70,9 +70,12 @@ render.yaml        blueprint de los dos servicios
 
 | Método | Ruta               | Rol requerido | Descripción                                                              |
 | ------ | ------------------ | ------------- | ------------------------------------------------------------------------ |
-| GET    | `/api/recipes`     | público       | Listado. Query: `page`, `limit`, `search`, `category`, `vegetarian`      |
+| GET    | `/api/recipes`     | público       | Listado. Query: `page`, `limit`, `search`, `category`, `vegetarian`, `sort` (`recent` / `popular`) |
 | GET    | `/api/recipes/mine` | `admin`      | Solo las recetas creadas por el admin logueado (mismos filtros)          |
+| GET    | `/api/recipes/liked` | con sesión  | Recetas a las que el usuario logueado le dio like (mismos filtros)       |
 | GET    | `/api/recipes/:id` | público       | Detalle (404 si no existe)                                               |
+| POST   | `/api/recipes/:id/like` | con sesión | Da like (uno por usuario). Devuelve `{ likesCount, likedByMe }`        |
+| DELETE | `/api/recipes/:id/like` | con sesión | Quita el like. Devuelve `{ likesCount, likedByMe }`                    |
 | POST   | `/api/recipes`     | `admin`       | Crea una receta (201), queda a nombre de quien la crea                   |
 | PUT    | `/api/recipes/:id` | `admin` dueño | Reemplaza la receta completa (todos los campos obligatorios)             |
 | PATCH  | `/api/recipes/:id` | `admin` dueño | Actualiza solo los campos enviados                                       |
@@ -87,6 +90,11 @@ Códigos de respuesta: `201` al crear, `204` al eliminar, `400` datos inválidos
 Las rutas de escritura usan `authMiddleware` + `requireRole("admin")`. Además, PUT/PATCH/DELETE
 verifican que `createdBy` de la receta sea el usuario logueado: **cada admin solo edita y elimina sus
 propias recetas**, y en su panel ve únicamente las suyas. El listado público muestra todas.
+
+**Likes:** cualquier usuario logueado (`user` o `admin`) puede darle like a una receta, una sola vez.
+Cada receta devuelve `likesCount` y `likedByMe` (si el usuario logueado ya le dio like; sin sesión es
+`false`). La lista de quiénes dieron like no se expone. El like y el unlike son atómicos e idempotentes:
+repetirlos no cambia el contador.
 
 ### Autenticación (Better Auth, montado en `/api/auth/*`)
 
@@ -104,8 +112,13 @@ propias recetas**, y en su panel ve únicamente las suyas. El listado público m
 
 ## Funcionalidades del frontend
 
-- `/` listado público con búsqueda, filtro por categoría y vegetariana, y paginación (los filtros quedan en la URL).
+- `/` listado público con búsqueda, filtro por categoría y vegetariana, orden "Más recientes" /
+  "Más gustadas", y paginación (los filtros quedan en la URL).
 - `/recetas/:id` detalle de la receta.
+- Botón ❤ **Me gusta** con contador en cada tarjeta y en el detalle. Sin sesión lleva al login y
+  después vuelve a la misma página.
+- `/favoritas` (**Mis favoritas**, ruta privada para cualquier usuario logueado): las recetas a las
+  que el usuario le dio like.
 - `/login` (email + GitHub + Google) y `/registro`; logout desde el header. Los botones sociales se
   muestran solo si el proveedor está configurado en el backend.
 - `/admin` panel con el ABM de **las recetas propias** del admin; `/admin/recetas/nueva` y
@@ -125,6 +138,10 @@ Están los cuatro:
   que creó (`GET /api/recipes/mine` + chequeo de `createdBy` en PUT/PATCH/DELETE → 403).
 - ✅ Login con Google, además de GitHub.
 - ✅ Página de admin para cambiar roles (`authClient.admin.setRole`).
+
+Extra:
+
+- ✅ Likes en las recetas, orden por "Más gustadas" y página **Mis favoritas**.
 
 ## Cómo correrlo en local
 
