@@ -13,6 +13,10 @@ export interface IRecipe {
   vegetarian: boolean;
   publishedAt: Date;
   createdBy?: string;
+  /** Ids de los usuarios que le dieron like (no se expone en las respuestas). */
+  likes?: string[];
+  /** Cantidad de likes, guardada aparte para poder ordenar por popularidad. */
+  likesCount?: number;
 }
 
 export type RecipeDocument = HydratedDocument<IRecipe>;
@@ -60,11 +64,30 @@ const recipeSchema = new Schema<IRecipe>(
     createdBy: {
       type: String,
     },
+    likes: {
+      type: [String],
+      default: [],
+    },
+    likesCount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
   },
-  { timestamps: true },
+  {
+    timestamps: true,
+    toJSON: {
+      // La lista de ids que dieron like no se manda al cliente: solo el contador.
+      transform: (_doc, ret: Record<string, unknown>) => {
+        delete ret.likes;
+        return ret;
+      },
+    },
+  },
 );
 
 recipeSchema.index({ title: 1 });
+recipeSchema.index({ likesCount: -1 });
 
 const Recipe = model<IRecipe>("Recipe", recipeSchema);
 
