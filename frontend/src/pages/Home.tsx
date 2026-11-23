@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router";
 import { RecipeCard } from "../components/RecipeCard";
 import { getErrorMessage } from "../lib/api";
+import { useSession } from "../lib/auth-client";
 import { recipesService } from "../services/recipes";
 import {
   CATEGORY_LABELS,
@@ -18,6 +19,9 @@ export const Home = () => {
   const search = params.get("search") ?? "";
   const category = (params.get("category") ?? "") as RecipeCategory | "";
   const vegetarian = (params.get("vegetarian") ?? "") as "true" | "false" | "";
+  const sort = params.get("sort") === "popular" ? "popular" : "recent";
+  // Al iniciar/cerrar sesion se recarga el listado para actualizar los corazones.
+  const userId = useSession().data?.user.id;
 
   const [searchInput, setSearchInput] = useState(search);
   const [result, setResult] = useState<Paginated<Recipe> | null>(null);
@@ -28,14 +32,14 @@ export const Home = () => {
     let cancelled = false;
     setLoading(true);
     recipesService
-      .list({ page, limit: 9, search, category, vegetarian })
+      .list({ page, limit: 9, search, category, vegetarian, sort })
       .then((data) => !cancelled && (setResult(data), setError(null)))
       .catch((err) => !cancelled && setError(getErrorMessage(err)))
       .finally(() => !cancelled && setLoading(false));
     return () => {
       cancelled = true;
     };
-  }, [page, search, category, vegetarian]);
+  }, [page, search, category, vegetarian, sort, userId]);
 
   const updateParams = (changes: Record<string, string>) => {
     const next = new URLSearchParams(params);
@@ -56,7 +60,7 @@ export const Home = () => {
           event.preventDefault();
           updateParams({ search: searchInput.trim() });
         }}
-        className="mb-6 grid gap-3 rounded-xl border border-slate-200 bg-white p-4 sm:grid-cols-[1fr_auto_auto_auto]"
+        className="mb-6 grid gap-3 rounded-xl border border-slate-200 bg-white p-4 sm:grid-cols-2 lg:grid-cols-[1fr_auto_auto_auto_auto]"
       >
         <input
           className="input"
@@ -84,6 +88,15 @@ export const Home = () => {
           <option value="">Todas</option>
           <option value="true">Solo vegetarianas</option>
           <option value="false">No vegetarianas</option>
+        </select>
+        <select
+          className="input"
+          value={sort}
+          onChange={(event) => updateParams({ sort: event.target.value === "popular" ? "popular" : "" })}
+          aria-label="Ordenar"
+        >
+          <option value="recent">Más recientes</option>
+          <option value="popular">Más gustadas ❤</option>
         </select>
         <button type="submit" className="btn-primary">
           Buscar
