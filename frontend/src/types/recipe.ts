@@ -20,6 +20,9 @@ export interface Recipe {
   publishedAt: string;
   /** Id del admin que la creo: solo el puede editarla o borrarla. */
   createdBy?: string;
+  likesCount: number;
+  /** true si el usuario logueado ya le dio like (false sin sesion). */
+  likedByMe: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -35,4 +38,10 @@ export interface RecipeFilters {
   search?: string;
   category?: RecipeCategory | "";
   vegetarian?: "true" | "false" | "";
+  sort?: "recent" | "popular";
+}
+
+export interface LikeStatus {
+  likesCount: number;
+  likedByMe: boolean;
 }

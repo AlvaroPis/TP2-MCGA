@@ -1,6 +1,6 @@
 import { apiFetch } from "../lib/api";
 import type { RecipeFormValues } from "../schemas/recipe.schema";
-import type { Paginated, Recipe, RecipeFilters } from "../types/recipe";
+import type { LikeStatus, Paginated, Recipe, RecipeFilters } from "../types/recipe";
 
 function toPayload(values: RecipeFormValues) {
   return { ...values, publishedAt: `${values.publishedAt}T00:00:00.000Z` };
@@ -23,6 +23,19 @@ export const recipesService = {
   // Solo las recetas creadas por el admin logueado (panel de administracion).
   listMine(filters: RecipeFilters = {}) {
     return apiFetch<Paginated<Recipe>>(`/recipes/mine${toQuery(filters)}`);
+  },
+
+  // Recetas a las que el usuario logueado le dio like.
+  listLiked(filters: RecipeFilters = {}) {
+    return apiFetch<Paginated<Recipe>>(`/recipes/liked${toQuery(filters)}`);
+  },
+
+  like(id: string) {
+    return apiFetch<LikeStatus>(`/recipes/${id}/like`, { method: "POST" });
+  },
+
+  unlike(id: string) {
+    return apiFetch<LikeStatus>(`/recipes/${id}/like`, { method: "DELETE" });
   },
 
   get(id: string) {

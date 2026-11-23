@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router";
 import { getRole, useSession } from "../lib/auth-client";
 import { ApiError, getErrorMessage } from "../lib/api";
 import { formatDate } from "../lib/format";
+import { LikeButton } from "../components/LikeButton";
 import { recipesService } from "../services/recipes";
 import { CATEGORY_LABELS, type Recipe } from "../types/recipe";
 
@@ -12,6 +13,8 @@ export const RecipeDetail = () => {
   const [recipe, setRecipe] = useState<Recipe | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // Se recarga si cambia el usuario logueado, para saber si ya le dio like.
+  const userId = session?.user.id;
   useEffect(() => {
     recipesService
       .get(id)
@@ -19,7 +22,7 @@ export const RecipeDetail = () => {
       .catch((err) =>
         setError(err instanceof ApiError && err.status === 404 ? "La receta no existe." : getErrorMessage(err)),
       );
-  }, [id]);
+  }, [id, userId]);
 
   if (error) {
     return (
@@ -47,7 +50,14 @@ export const RecipeDetail = () => {
           <span className="rounded-full bg-green-100 px-2 py-0.5 font-medium text-green-700">Vegetariana</span>
         )}
       </div>
-      <h1 className="mt-2 text-3xl font-bold">{recipe.title}</h1>
+      <div className="mt-2 flex flex-wrap items-start justify-between gap-4">
+        <h1 className="text-3xl font-bold">{recipe.title}</h1>
+        <LikeButton
+          size="md"
+          recipeId={recipe._id}
+          initial={{ likesCount: recipe.likesCount ?? 0, likedByMe: recipe.likedByMe ?? false }}
+        />
+      </div>
 
       <dl className="my-6 grid grid-cols-3 gap-4 rounded-lg bg-brand-50 p-4 text-center text-sm">
         <div>
