@@ -18,4 +18,9 @@ export const env = {
   FRONTEND_URL: process.env.FRONTEND_URL || "http://localhost:5173",
   GITHUB_CLIENT_ID: process.env.GITHUB_CLIENT_ID ?? "",
   GITHUB_CLIENT_SECRET: process.env.GITHUB_CLIENT_SECRET ?? "",
+  // Opcional: lista separada por comas de servidores DNS (ver config/db.ts)
+  DNS_SERVERS: (process.env.DNS_SERVERS ?? "")
+    .split(",")
+    .map((server) => server.trim())
+    .filter(Boolean),
 };

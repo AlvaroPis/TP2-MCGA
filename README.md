@@ -151,6 +151,7 @@ puerto, se puede cambiar con la variable `VITE_BACKEND_URL` al levantar Vite.
 | `FRONTEND_URL`         | `http://localhost:5173`          | Origen permitido (CORS + `trustedOrigins`)                    |
 | `GITHUB_CLIENT_ID`     | —                                | OAuth App de GitHub                                           |
 | `GITHUB_CLIENT_SECRET` | —                                | OAuth App de GitHub                                           |
+| `DNS_SERVERS`          | `8.8.8.8,1.1.1.1` (opcional)     | Solo si aparece `querySrv ECONNREFUSED` al usar `mongodb+srv://` |
 | `SEED_*`               | (opcionales)                     | Emails/contraseñas de los usuarios que crea el seed           |
 
 Para GitHub crear una **OAuth App** (GitHub → Settings → Developer settings → OAuth Apps):
