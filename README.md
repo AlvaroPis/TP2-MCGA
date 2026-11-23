@@ -22,10 +22,9 @@ roles de los usuarios desde un panel propio.
 
 | Parte    | URL                                       |
 | -------- | ----------------------------------------- |
-| Frontend | https://recetario.onrender.com            |
-| Backend  | https://recetario-api.onrender.com        |
+| Frontend | https://recetario-unry.onrender.com            |
+| Backend  | https://recetario-api-y1xv.onrender.com        |
 
-> Si Render asigna otras URLs al crear los servicios, actualizarlas acá y en `render.yaml`.
 
 ## Usuarios de prueba
 
@@ -157,8 +156,8 @@ puerto, se puede cambiar con la variable `VITE_BACKEND_URL` al levantar Vite.
 Para GitHub crear una **OAuth App** (GitHub → Settings → Developer settings → OAuth Apps):
 
 - Local: Homepage `http://localhost:5173`, callback `http://localhost:5173/api/auth/callback/github`.
-- Producción (otra OAuth App): Homepage `https://recetario.onrender.com`, callback
-  `https://recetario.onrender.com/api/auth/callback/github`.
+- Producción (otra OAuth App): Homepage `https://recetario-unry.onrender.com`, callback
+  `https://recetario-unry.onrender.com/api/auth/callback/github`.
 
 ## Deploy en Render
 
@@ -168,7 +167,7 @@ El archivo `render.yaml` define los dos servicios (Render → **New → Blueprin
   Cargar en el dashboard `MONGODB_URI`, `GITHUB_CLIENT_ID` y `GITHUB_CLIENT_SECRET`
   (`BETTER_AUTH_SECRET` lo genera Render).
 - **recetario** — Static Site (`frontend/`): publica `dist/` con dos rewrites:
-  - `/api/*` → `https://recetario-api.onrender.com/api/*` (el frontend llama a `/api`, no al backend directo).
+  - `/api/*` → `https://recetario-api-y1xv.onrender.com/api/*` (el frontend llama a `/api`, no al backend directo).
   - `/*` → `/index.html` (F5 en cualquier ruta funciona).
 
 Como el navegador solo habla con la URL del frontend, la cookie de sesión de Better Auth es del mismo
