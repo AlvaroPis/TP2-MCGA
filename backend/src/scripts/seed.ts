@@ -90,20 +90,34 @@ async function seedUsers(): Promise<void> {
   }
 }
 
-async function seedRecipes(): Promise<void> {
+// Las recetas de ejemplo (y las viejas sin dueño) quedan a nombre del admin de prueba,
+// asi ese admin puede editarlas desde su panel.
+async function seedRecipes(adminId: string): Promise<void> {
   const count = await Recipe.countDocuments();
-  if (count > 0) {
+  if (count === 0) {
+    await Recipe.insertMany(sampleRecipes.map((recipe) => ({ ...recipe, createdBy: adminId })));
+    console.log(`[seed] ${sampleRecipes.length} recetas de ejemplo cargadas`);
+  } else {
     console.log(`[seed] ya hay ${count} recetas, no se cargan las de ejemplo`);
-    return;
   }
-  await Recipe.insertMany(sampleRecipes);
-  console.log(`[seed] ${sampleRecipes.length} recetas de ejemplo cargadas`);
+
+  const { modifiedCount } = await Recipe.updateMany(
+    { $or: [{ createdBy: { $exists: false } }, { createdBy: null }, { createdBy: "" }] },
+    { $set: { createdBy: adminId } },
+  );
+  if (modifiedCount > 0) console.log(`[seed] ${modifiedCount} recetas sin dueño asignadas al admin`);
+}
+
+async function getAdminId(): Promise<string> {
+  const admin = await authDb.collection("user").findOne({ email: testUsers[0].email });
+  if (!admin) throw new Error("No se encontró el usuario admin de prueba");
+  return admin._id.toString();
 }
 
 async function main(): Promise<void> {
   await connectMongoDB();
   await seedUsers();
-  await seedRecipes();
+  await seedRecipes(await getAdminId());
   await disconnectMongoDB();
 }
 
