@@ -44,6 +44,8 @@ export const listRecipesQuerySchema = z.object({
     .enum(["true", "false"])
     .transform((value) => value === "true")
     .optional(),
+  // recent: las mas nuevas primero (por defecto) · popular: las de mas likes primero
+  sort: z.enum(["recent", "popular"]).default("recent"),
 });
 
 export type CreateRecipeInput = z.infer<typeof createRecipeSchema>;
