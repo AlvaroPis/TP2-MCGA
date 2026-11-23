@@ -30,6 +30,21 @@ export async function authMiddleware(req: Request, res: Response, next: NextFunc
   }
 }
 
+// optionalAuth: para rutas publicas que muestran algo distinto si hay sesion (ej: "ya le di like").
+// Si hay sesion completa req.user; si no, sigue igual sin cortar con 401.
+export async function optionalAuth(req: Request, _res: Response, next: NextFunction): Promise<void> {
+  try {
+    const session = await auth.api.getSession({ headers: fromNodeHeaders(req.headers) });
+    if (session) {
+      req.user = session.user;
+      req.session = session.session;
+    }
+    next();
+  } catch (error) {
+    next(error);
+  }
+}
+
 export function requireRole(...allowedRoles: UserRole[]) {
   return (req: Request, res: Response, next: NextFunction): void => {
     if (!req.user) {
