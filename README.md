@@ -30,10 +30,11 @@ roles de los usuarios desde un panel propio.
 
 Los crea el script `npm run seed` (en `backend/`).
 
-| Rol   | Email                 | Contraseña   |
-| ----- | --------------------- | ------------ |
-| admin | admin@recetario.com   | Admin12345   |
-| user  | user@recetario.com    | User12345    |
+| Rol   | Email                 | Contraseña   | Nota                                          |
+| ----- | --------------------- | ------------ | --------------------------------------------- |
+| admin | admin@recetario.com   | Admin12345   | Dueño de las 5 recetas de ejemplo             |
+| admin | admin2@recetario.com  | Admin2345    | Sin recetas: sirve para probar el 403 al editar recetas ajenas |
+| user  | user@recetario.com    | User12345    | Solo lectura                                  |
 
 ## Stack
 
