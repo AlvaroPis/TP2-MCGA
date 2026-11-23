@@ -19,10 +19,11 @@ function notFound(res: Response): void {
   res.status(404).json({ error: "Receta no encontrada" });
 }
 
-// GET /api/recipes?page=1&limit=9&search=tarta&category=postre&vegetarian=true
-export async function listRecipes(_req: Request, res: Response): Promise<void> {
-  const { page, limit, search, category, vegetarian } = res.locals.query as ListRecipesQuery;
+function notOwner(res: Response): void {
+  res.status(403).json({ error: "Solo podés modificar las recetas que creaste vos" });
+}
 
+function buildFilter({ search, category, vegetarian }: ListRecipesQuery): QueryFilter<IRecipe> {
   const filter: QueryFilter<IRecipe> = {};
   if (category) filter.category = category;
   if (vegetarian !== undefined) filter.vegetarian = vegetarian;
@@ -33,7 +34,10 @@ export async function listRecipes(_req: Request, res: Response): Promise<void> {
       { description: { $regex: safe, $options: "i" } },
     ];
   }
+  return filter;
+}
 
+async function sendPage(res: Response, filter: QueryFilter<IRecipe>, page: number, limit: number) {
   const [data, total] = await Promise.all([
     Recipe.find(filter)
       .sort({ publishedAt: -1, _id: -1 })
@@ -48,7 +52,19 @@ export async function listRecipes(_req: Request, res: Response): Promise<void> {
   });
 }
 
-// GET /api/recipes/:id
+// GET /api/recipes?page=1&limit=9&search=tarta&category=postre&vegetarian=true  (publico)
+export async function listRecipes(_req: Request, res: Response): Promise<void> {
+  const query = res.locals.query as ListRecipesQuery;
+  await sendPage(res, buildFilter(query), query.page, query.limit);
+}
+
+// GET /api/recipes/mine  (admin): solo las recetas que creo el usuario logueado
+export async function listMyRecipes(req: Request, res: Response): Promise<void> {
+  const query = res.locals.query as ListRecipesQuery;
+  await sendPage(res, { ...buildFilter(query), createdBy: req.user!.id }, query.page, query.limit);
+}
+
+// GET /api/recipes/:id  (publico)
 export async function getRecipeById(req: Request<{ id: string }>, res: Response): Promise<void> {
   const { id } = req.params;
   if (!isValidObjectId(id)) return invalidId(res);
@@ -59,16 +75,16 @@ export async function getRecipeById(req: Request<{ id: string }>, res: Response)
   res.status(200).json(recipe);
 }
 
-// POST /api/recipes  (admin)
+// POST /api/recipes  (admin): la receta queda a nombre de quien la crea
 export async function createRecipe(
   req: Request<{}, {}, CreateRecipeInput>,
   res: Response,
 ): Promise<void> {
-  const recipe = await Recipe.create({ ...req.body, createdBy: req.user?.id });
+  const recipe = await Recipe.create({ ...req.body, createdBy: req.user!.id });
   res.status(201).json(recipe);
 }
 
-// PUT /api/recipes/:id (reemplazo completo) y PATCH /api/recipes/:id (parcial)  (admin)
+// PUT /api/recipes/:id (reemplazo completo) y PATCH /api/recipes/:id (parcial)  (admin dueño)
 export async function updateRecipe(
   req: Request<{ id: string }, {}, CreateRecipeInput | PatchRecipeInput>,
   res: Response,
@@ -76,22 +92,25 @@ export async function updateRecipe(
   const { id } = req.params;
   if (!isValidObjectId(id)) return invalidId(res);
 
-  const recipe = await Recipe.findByIdAndUpdate(id, req.body, {
-    returnDocument: "after",
-    runValidators: true,
-  });
+  const recipe = await Recipe.findById(id);
   if (!recipe) return notFound(res);
+  if (recipe.createdBy !== req.user!.id) return notOwner(res);
+
+  recipe.set(req.body);
+  await recipe.save();
 
   res.status(200).json(recipe);
 }
 
-// DELETE /api/recipes/:id  (admin)
+// DELETE /api/recipes/:id  (admin dueño)
 export async function deleteRecipe(req: Request<{ id: string }>, res: Response): Promise<void> {
   const { id } = req.params;
   if (!isValidObjectId(id)) return invalidId(res);
 
-  const recipe = await Recipe.findByIdAndDelete(id);
+  const recipe = await Recipe.findById(id);
   if (!recipe) return notFound(res);
+  if (recipe.createdBy !== req.user!.id) return notOwner(res);
 
+  await recipe.deleteOne();
   res.status(204).send();
 }

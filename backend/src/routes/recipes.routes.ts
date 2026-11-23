@@ -1,9 +1,11 @@
-// Metodo + ruta -> middlewares -> controlador. Lectura publica, escritura solo admin.
+// Metodo + ruta -> middlewares -> controlador.
+// Lectura publica; escritura solo admin, y cada admin modifica unicamente sus propias recetas.
 import { Router } from "express";
 import {
   createRecipe,
   deleteRecipe,
   getRecipeById,
+  listMyRecipes,
   listRecipes,
   updateRecipe,
 } from "../controllers/recipes.controller.js";
@@ -19,6 +21,10 @@ const router = Router();
 
 // Publicas
 router.get("/", validateQuery(listRecipesQuerySchema), listRecipes);
+
+// Panel admin: solo las recetas propias (va antes de /:id para que "mine" no se tome como id)
+router.get("/mine", authMiddleware, requireRole("admin"), validateQuery(listRecipesQuerySchema), listMyRecipes);
+
 router.get("/:id", getRecipeById);
 
 // Escritura: sesion + rol admin
