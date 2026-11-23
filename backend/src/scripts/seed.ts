@@ -1,4 +1,6 @@
-// Crea los dos usuarios de prueba (admin y comun) y algunas recetas de ejemplo.
+// Crea los usuarios de prueba (dos admins y uno comun) y algunas recetas de ejemplo.
+// Las recetas de ejemplo quedan a nombre del primer admin; el segundo sirve para probar
+// que un admin no puede editar ni borrar las recetas de otro.
 // Es idempotente: si ya existen, no los duplica. Uso: npm run seed
 import { authDb, connectMongoDB, disconnectMongoDB } from "../config/db.js";
 import { auth } from "../lib/auth.js";
@@ -9,6 +11,12 @@ const testUsers = [
     name: "Admin Recetario",
     email: process.env.SEED_ADMIN_EMAIL || "admin@recetario.com",
     password: process.env.SEED_ADMIN_PASSWORD || "Admin12345",
+    role: "admin",
+  },
+  {
+    name: "Admin Dos",
+    email: process.env.SEED_ADMIN2_EMAIL || "admin2@recetario.com",
+    password: process.env.SEED_ADMIN2_PASSWORD || "Admin2345",
     role: "admin",
   },
   {
