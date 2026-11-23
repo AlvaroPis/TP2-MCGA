@@ -1,6 +1,6 @@
 # Blueprint de Render: backend como Web Service y frontend como Static Site.
 # Los valores secretos (sync: false) se cargan a mano en el dashboard de Render, nunca en el repo.
-# Si Render asigna otra URL (por ejemplo con sufijo), actualizar BETTER_AUTH_URL, FRONTEND_URL y el rewrite de /api.
+# URLs reales asignadas por Render: frontend recetario-unry, backend recetario-api-y1xv.
 services:
   - type: web
     name: recetario-api
@@ -18,9 +18,9 @@ services:
       - key: BETTER_AUTH_SECRET
         generateValue: true
       - key: BETTER_AUTH_URL
-        value: https://recetario.onrender.com
+        value: https://recetario-unry.onrender.com
       - key: FRONTEND_URL
-        value: https://recetario.onrender.com
+        value: https://recetario-unry.onrender.com
       - key: GITHUB_CLIENT_ID
         sync: false
       - key: GITHUB_CLIENT_SECRET
@@ -36,7 +36,7 @@ services:
       # El frontend llama a /api y Render lo reenvia al backend (misma URL -> cookies first-party).
       - type: rewrite
         source: /api/*
-        destination: https://recetario-api.onrender.com/api/*
+        destination: https://recetario-api-y1xv.onrender.com/api/*
       # F5 en cualquier ruta del SPA devuelve index.html.
       - type: rewrite
         source: /*
