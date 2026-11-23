@@ -25,6 +25,11 @@ export const Layout = () => {
             <NavLink to="/" end className={navClass}>
               Recetas
             </NavLink>
+            {user && (
+              <NavLink to="/favoritas" className={navClass}>
+                Mis favoritas
+              </NavLink>
+            )}
             {getRole(user) === "admin" && (
               <>
                 <NavLink to="/admin" end className={navClass}>

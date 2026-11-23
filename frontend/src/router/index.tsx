@@ -10,6 +10,7 @@ import { AdminRecipes } from "../pages/admin/AdminRecipes";
 import { RecipeFormPage } from "../pages/admin/RecipeFormPage";
 import { AdminUsers } from "../pages/admin/AdminUsers";
 import { NotFound } from "../pages/NotFound";
+import { Favorites } from "../pages/Favorites";
 
 export const router = createBrowserRouter([
   {
@@ -20,6 +21,12 @@ export const router = createBrowserRouter([
       { path: "recetas/:id", element: <RecipeDetail /> },
       { path: "login", element: <Login /> },
       { path: "registro", element: <Register /> },
+
+      // Privada para cualquier usuario logueado (user o admin)
+      {
+        element: <ProtectedRoute />,
+        children: [{ path: "favoritas", element: <Favorites /> }],
+      },
 
       {
         path: "admin",
