@@ -1,0 +1,35 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", system-ui, sans-serif;
+  --color-brand-50: oklch(98% 0.02 60);
+  --color-brand-100: oklch(95% 0.05 60);
+  --color-brand-500: oklch(68% 0.18 45);
+  --color-brand-600: oklch(62% 0.19 42);
+  --color-brand-700: oklch(53% 0.17 40);
+}
+
+/* Clases propias reutilizables (en Tailwind v4 se declaran con @utility). */
+@utility input {
+  @apply w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100;
+}
+
+@utility btn {
+  @apply inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50;
+}
+
+@utility btn-primary {
+  @apply btn bg-brand-600 text-white hover:bg-brand-700;
+}
+
+@utility btn-secondary {
+  @apply btn border border-slate-300 bg-white text-slate-800 hover:bg-slate-50;
+}
+
+@utility btn-danger {
+  @apply btn bg-red-600 text-white hover:bg-red-700;
+}
+
+@utility field-error {
+  @apply mt-1 text-xs text-red-600;
+}
