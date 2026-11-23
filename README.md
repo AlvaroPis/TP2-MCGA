@@ -70,17 +70,22 @@ render.yaml        blueprint de los dos servicios
 | Método | Ruta               | Rol requerido | Descripción                                                              |
 | ------ | ------------------ | ------------- | ------------------------------------------------------------------------ |
 | GET    | `/api/recipes`     | público       | Listado. Query: `page`, `limit`, `search`, `category`, `vegetarian`      |
+| GET    | `/api/recipes/mine` | `admin`      | Solo las recetas creadas por el admin logueado (mismos filtros)          |
 | GET    | `/api/recipes/:id` | público       | Detalle (404 si no existe)                                               |
-| POST   | `/api/recipes`     | `admin`       | Crea una receta (201). Body validado con Zod                             |
-| PUT    | `/api/recipes/:id` | `admin`       | Reemplaza la receta completa (todos los campos obligatorios)             |
-| PATCH  | `/api/recipes/:id` | `admin`       | Actualiza solo los campos enviados                                       |
-| DELETE | `/api/recipes/:id` | `admin`       | Elimina la receta (204)                                                  |
+| POST   | `/api/recipes`     | `admin`       | Crea una receta (201), queda a nombre de quien la crea                   |
+| PUT    | `/api/recipes/:id` | `admin` dueño | Reemplaza la receta completa (todos los campos obligatorios)             |
+| PATCH  | `/api/recipes/:id` | `admin` dueño | Actualiza solo los campos enviados                                       |
+| DELETE | `/api/recipes/:id` | `admin` dueño | Elimina la receta (204)                                                  |
+| GET    | `/api/config/providers` | público  | Qué logins sociales están habilitados: `{ github, google }`              |
 | GET    | `/health`          | público       | Health check para Render                                                 |
 
 Códigos de respuesta: `201` al crear, `204` al eliminar, `400` datos inválidos (con detalle por campo),
-`401` sin sesión, `403` sin permisos (rol `user`), `404` receta inexistente.
+`401` sin sesión, `403` sin permisos (rol `user`, o admin que intenta modificar una receta ajena),
+`404` receta inexistente.
 
-Las rutas de escritura usan `authMiddleware` + `requireRole("admin")`.
+Las rutas de escritura usan `authMiddleware` + `requireRole("admin")`. Además, PUT/PATCH/DELETE
+verifican que `createdBy` de la receta sea el usuario logueado: **cada admin solo edita y elimina sus
+propias recetas**, y en su panel ve únicamente las suyas. El listado público muestra todas.
 
 ### Autenticación (Better Auth, montado en `/api/auth/*`)
 
@@ -88,8 +93,9 @@ Las rutas de escritura usan `authMiddleware` + `requireRole("admin")`.
 | ------ | ---------------------------------- | ------------- | ----------------------------------- |
 | POST   | `/api/auth/sign-up/email`          | público       | Registro (rol `user` por defecto)   |
 | POST   | `/api/auth/sign-in/email`          | público       | Login con email y contraseña        |
-| POST   | `/api/auth/sign-in/social`         | público       | Login con GitHub                    |
+| POST   | `/api/auth/sign-in/social`         | público       | Login con GitHub o Google           |
 | GET    | `/api/auth/callback/github`        | público       | Callback de la OAuth App de GitHub  |
+| GET    | `/api/auth/callback/google`        | público       | Callback del cliente OAuth de Google |
 | GET    | `/api/auth/get-session`            | público       | Sesión actual (la usa `useSession`) |
 | POST   | `/api/auth/sign-out`               | con sesión    | Logout                              |
 | GET    | `/api/auth/admin/list-users`       | `admin`       | Listado de usuarios                 |
@@ -99,9 +105,11 @@ Las rutas de escritura usan `authMiddleware` + `requireRole("admin")`.
 
 - `/` listado público con búsqueda, filtro por categoría y vegetariana, y paginación (los filtros quedan en la URL).
 - `/recetas/:id` detalle de la receta.
-- `/login` (email + GitHub) y `/registro`; logout desde el header.
-- `/admin` panel con el ABM de recetas; `/admin/recetas/nueva` y `/admin/recetas/:id/editar` con
-  formularios React Hook Form + Zod que muestran los errores de validación.
+- `/login` (email + GitHub + Google) y `/registro`; logout desde el header. Los botones sociales se
+  muestran solo si el proveedor está configurado en el backend.
+- `/admin` panel con el ABM de **las recetas propias** del admin; `/admin/recetas/nueva` y
+  `/admin/recetas/:id/editar` con formularios React Hook Form + Zod que muestran los errores de
+  validación. Si un admin abre la edición de una receta ajena ve "Sin permisos".
 - `/admin/usuarios` cambio de roles con `authClient.admin.setRole` (opcional del TP).
 - Rutas `/admin/*` protegidas por rol: sin sesión redirige a `/login` (y vuelve después de ingresar);
   un usuario común ve la pantalla **"Sin permisos"**.
@@ -109,7 +117,12 @@ Las rutas de escritura usan `authMiddleware` + `requireRole("admin")`.
 
 ### Opcionales implementados
 
+Están los cuatro:
+
 - ✅ Paginación, filtros y búsqueda en el listado.
+- ✅ Cada usuario ve / edita solo sus propios registros: cada admin gestiona únicamente las recetas
+  que creó (`GET /api/recipes/mine` + chequeo de `createdBy` en PUT/PATCH/DELETE → 403).
+- ✅ Login con Google, además de GitHub.
 - ✅ Página de admin para cambiar roles (`authClient.admin.setRole`).
 
 ## Cómo correrlo en local
@@ -150,6 +163,8 @@ puerto, se puede cambiar con la variable `VITE_BACKEND_URL` al levantar Vite.
 | `FRONTEND_URL`         | `http://localhost:5173`          | Origen permitido (CORS + `trustedOrigins`)                    |
 | `GITHUB_CLIENT_ID`     | —                                | OAuth App de GitHub                                           |
 | `GITHUB_CLIENT_SECRET` | —                                | OAuth App de GitHub                                           |
+| `GOOGLE_CLIENT_ID`     | —                                | Cliente OAuth de Google                                       |
+| `GOOGLE_CLIENT_SECRET` | —                                | Cliente OAuth de Google                                       |
 | `DNS_SERVERS`          | `8.8.8.8,1.1.1.1` (opcional)     | Solo si aparece `querySrv ECONNREFUSED` al usar `mongodb+srv://` |
 | `SEED_*`               | (opcionales)                     | Emails/contraseñas de los usuarios que crea el seed           |
 
@@ -158,6 +173,13 @@ Para GitHub crear una **OAuth App** (GitHub → Settings → Developer settings 
 - Local: Homepage `http://localhost:5173`, callback `http://localhost:5173/api/auth/callback/github`.
 - Producción (otra OAuth App): Homepage `https://recetario-unry.onrender.com`, callback
   `https://recetario-unry.onrender.com/api/auth/callback/github`.
+
+Para Google crear un **ID de cliente de OAuth** (Google Cloud Console → APIs y servicios →
+Credenciales → Crear credenciales → ID de cliente de OAuth → Aplicación web):
+
+- Orígenes de JavaScript autorizados: `http://localhost:5173` y `https://recetario-unry.onrender.com`.
+- URIs de redireccionamiento autorizados: `http://localhost:5173/api/auth/callback/google` y
+  `https://recetario-unry.onrender.com/api/auth/callback/google`.
 
 ## Deploy en Render
 
